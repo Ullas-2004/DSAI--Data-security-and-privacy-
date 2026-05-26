@@ -1,0 +1,306 @@
+﻿{% extends "base.html" %}
+{% block title %}SecureFace | {{ result.mode|title }} Result{% endblock %}
+
+{% block content %}
+{% if result.mode == 'authenticate' %}
+  {% set success = result.authenticated %}
+  {% set decision_label = 'Access Granted' if result.authenticated else 'Access Denied' %}
+  {% set live_label = 'PASS' if result.liveness.session_live else 'FAIL' %}
+  {% set authenticity_tone = 'text-ok' if result.authenticity.classification == 'human' else 'text-bad' %}
+  {% set identity_label = 'Detected Identity' if result.authenticated else 'Verified Identity' %}
+{% else %}
+  {% set success = result.saved %}
+  {% set decision_label = 'Enrollment Stored' if result.saved else 'Enrollment Failed' %}
+  {% set live_label = 'PASS' if result.liveness.session_live else 'FAIL' %}
+  {% set authenticity_tone = 'text-ok' if result.authenticity.classification == 'human' else 'text-bad' %}
+  {% set identity_label = 'Claimed Identity' %}
+{% endif %}
+
+<section class="mx-auto max-w-7xl px-6 py-14">
+  <div class="mb-10 max-w-3xl">
+    <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-primary">
+      <span class="h-2 w-2 rounded-full bg-primary2"></span>
+      Processing Summary
+    </div>
+    <h1 class="mt-4 font-display text-4xl font-extrabold tracking-tight text-primary md:text-5xl">{{ result.mode|title }} Result</h1>
+    <p class="mt-4 text-lg leading-8 text-slate-600">
+      Final outcome and pipeline summary for the current {{ result.mode }} session.
+    </p>
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+    <div class="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-card">
+      <div class="border-b border-slate-100 px-8 py-6">
+        <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Decision</div>
+            <div class="mt-2 text-3xl font-extrabold {% if success %}text-ok{% else %}text-bad{% endif %}">{{ decision_label }}</div>
+            <div class="mt-2 text-sm leading-6 text-slate-500">
+              {% if result.mode == 'authenticate' %}
+                {{ result.input_kind|title }} input processed.
+                {% if result.authenticated %}
+                  Verified identity: {{ result.username }}.
+                {% else %}
+                  No enrolled identity is disclosed for failed authentication attempts.
+                {% endif %}
+              {% else %}
+                {{ result.input_kind|title }} input processed for {{ result.username }}.
+              {% endif %}
+            </div>
+          </div>
+          <div class="inline-flex items-center gap-3 rounded-2xl border px-4 py-3 {% if success %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-red-200 bg-red-50 text-red-700{% endif %}">
+            <span class="h-3 w-3 rounded-full {% if success %}bg-ok{% else %}bg-bad{% endif %}"></span>
+            <span class="text-sm font-bold uppercase tracking-[0.2em]">{% if success %}Outcome Positive{% else %}Outcome Negative{% endif %}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-8">
+        {% if result.mode == 'authenticate' %}
+          <div class="mb-8 rounded-3xl border {% if result.authenticity.flagged %}border-red-200 bg-red-50{% else %}border-emerald-200 bg-emerald-50{% endif %} p-6">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">Human Vs AI Check</div>
+            <div class="mt-3 text-lg font-extrabold {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">
+              {{ result.authenticity.label }}
+            </div>
+            <p class="mt-3 text-sm leading-7 {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">{{ result.authenticity.message }}</p>
+            <p class="mt-3 text-sm leading-7 {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">{{ result.security_message }}</p>
+            {% if result.unknown_person_alert %}
+              <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                Live unknown visitor alert recorded as entry #{{ result.unknown_attempt_id }}. Review it in the Unknown Alerts page.
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">{{ identity_label }}</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">
+              {% if result.mode == 'authenticate' and not result.authenticated %}
+                Not disclosed
+              {% else %}
+                {{ result.username }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Input Type</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">{{ result.input_kind|title }}</div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Detected Faces</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">{{ result.detected_faces }}</div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Sampled Faces</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">{{ result.sampled_faces }}</div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Liveness Status</div>
+            <div class="mt-3 text-xl font-extrabold {% if result.liveness.session_live %}text-ok{% else %}text-bad{% endif %}">{{ live_label }}</div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Challenge Check</div>
+            <div class="mt-3 text-xl font-extrabold {% if result.blink.verified %}text-ok{% else %}text-bad{% endif %}">
+              {% if result.blink.verified %}PASS{% else %}FAIL{% endif %}
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Challenge Signal</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">
+              {% if result.blink.action == 'turn_left' %}
+                Left Turn
+              {% elif result.blink.action == 'turn_right' %}
+                Right Turn
+              {% else %}
+                {{ result.blink.count }}/{{ result.blink.required }} Blink
+              {% endif %}
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Authenticity</div>
+            <div class="mt-3 text-xl font-extrabold {{ authenticity_tone }}">{{ result.authenticity.label }}</div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-5">
+            <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Live Ratio</div>
+            <div class="mt-3 text-xl font-extrabold text-ink">{{ '%.2f'|format(result.liveness.live_ratio * 100) }}%</div>
+          </div>
+          {% if result.mode == 'authenticate' %}
+            <div class="rounded-3xl border border-slate-200 p-5">
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Closest Similarity</div>
+              <div class="mt-3 text-xl font-extrabold text-ink">{{ '%.4f'|format(result.comparison.session_score) }}</div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 p-5">
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Match Ratio</div>
+              <div class="mt-3 text-xl font-extrabold text-ink">{{ '%.2f'|format(result.comparison.match_ratio * 100) }}%</div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 p-5">
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Deepfake Risk</div>
+              <div class="mt-3 text-xl font-extrabold {% if result.authenticity.flagged %}text-bad{% else %}text-ok{% endif %}">
+                {% if result.authenticity.flagged %}FLAGGED{% else %}CLEAR{% endif %}
+              </div>
+            </div>
+            <div class="rounded-3xl border border-slate-200 p-5 sm:col-span-2 xl:col-span-4">
+              <div class="grid gap-4 md:grid-cols-3">
+                <div>
+                  <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Threshold</div>
+                  <div class="mt-2 text-lg font-extrabold text-ink">{{ '%.2f'|format(result.comparison.match_threshold) }}</div>
+                </div>
+                <div>
+                  <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Match Policy</div>
+                  <div class="mt-2 text-lg font-extrabold text-ink">{{ '%.2f'|format(result.comparison.min_match_ratio * 100) }}%</div>
+                </div>
+                <div>
+                  <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Authenticated</div>
+                  <div class="mt-2 text-lg font-extrabold {% if result.authenticated %}text-ok{% else %}text-bad{% endif %}">{{ result.authenticated }}</div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="rounded-3xl border border-slate-200 p-5 sm:col-span-2 xl:col-span-4">
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Profile Saved</div>
+              <div class="mt-3 break-all rounded-2xl bg-slate-50 px-4 py-3 font-mono text-sm text-slate-600">{{ result.profile_path }}</div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
+          <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Run Metadata</div>
+          <div class="mt-5 grid gap-5 md:grid-cols-2">
+            <div>
+              <div class="text-sm font-bold text-slate-700">Input Path</div>
+              <div class="mt-2 break-all rounded-2xl bg-white px-4 py-3 font-mono text-xs leading-6 text-slate-600">{{ result.input_path }}</div>
+            </div>
+            <div>
+              <div class="text-sm font-bold text-slate-700">Run Directory</div>
+              <div class="mt-2 break-all rounded-2xl bg-white px-4 py-3 font-mono text-xs leading-6 text-slate-600">{{ result.run_dir }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Verification Details</div>
+      <h2 class="mt-2 text-2xl font-extrabold text-primary">Audit Signals</h2>
+
+      <div class="mt-6 space-y-4">
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">Mode</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">{{ result.mode|title }}</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">Session Live</div>
+          <div class="mt-2 text-sm leading-6 {% if result.liveness.session_live %}text-emerald-700{% else %}text-red-700{% endif %}">{{ result.liveness.session_live }}</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">Challenge Verification</div>
+          <div class="mt-2 text-sm leading-6 {% if result.blink.verified %}text-emerald-700{% else %}text-red-700{% endif %}">
+            {% if result.blink.action == 'turn_left' %}
+              Left-turn challenge {{ 'verified' if result.blink.verified else 'not verified' }} during live capture.
+            {% elif result.blink.action == 'turn_right' %}
+              Right-turn challenge {{ 'verified' if result.blink.verified else 'not verified' }} during live capture.
+            {% else %}
+              {{ result.blink.count }} of {{ result.blink.required }} required blinks detected during live capture.
+            {% endif %}
+          </div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">Human Vs AI</div>
+          <div class="mt-2 text-sm leading-6 {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">
+            {{ result.authenticity.label }}. Confidence hint: {{ '%.2f'|format(result.authenticity.confidence_hint) }}.
+          </div>
+        </div>
+        {% if result.mode == 'authenticate' %}
+          <div class="rounded-3xl border border-slate-200 p-4">
+            <div class="font-bold text-ink">Identity Match</div>
+            <div class="mt-2 text-sm leading-6 text-slate-600">
+              {% if result.authenticated %}
+                Verified identity: {{ result.closest_match.username }} with {{ '%.4f'|format(result.comparison.session_score) }} similarity and {{ '%.2f'|format(result.comparison.match_ratio * 100) }}% matched frames.
+              {% else %}
+                No identity was disclosed because the authentication attempt did not pass all required checks. Similarity and match ratio are kept only as internal risk signals.
+              {% endif %}
+            </div>
+          </div>
+          <div class="rounded-3xl border border-slate-200 p-4">
+            <div class="font-bold text-ink">Deepfake Flag</div>
+            <div class="mt-2 text-sm leading-6 {% if result.authenticity.flagged %}text-red-700{% else %}text-emerald-700{% endif %}">
+              {% if result.authenticity.flagged %}The capture looked spoof-like or AI-generated and was flagged for review.{% else %}The capture looked live; access outcome depended on identity matching.{% endif %}
+            </div>
+          </div>
+          {% if result.unknown_person_alert %}
+            <div class="rounded-3xl border border-slate-200 p-4">
+              <div class="font-bold text-ink">Unknown Alert</div>
+              <div class="mt-2 text-sm leading-6 text-amber-700">
+                This live visitor did not match an enrolled identity, so the session was added to the Unknown Alerts queue as entry #{{ result.unknown_attempt_id }}.
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="rounded-3xl border border-slate-200 p-4">
+            <div class="font-bold text-ink">Enrollment Output</div>
+            <div class="mt-2 text-sm leading-6 text-slate-600">Profile storage completed after the session passed the real-human authenticity checks.</div>
+          </div>
+        {% endif %}
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">Capture Source</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">{{ result.input_kind|title }} submitted for this run.</div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{{ url_for('register') }}" class="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary2">New Registration</a>
+        <a href="{{ url_for('authenticate') }}" class="inline-flex items-center justify-center rounded-2xl border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-blue-50">New Authentication</a>
+        {% if result.mode == 'authenticate' and result.unknown_person_alert %}
+          <a href="{{ url_for('unknown_attempts') }}" class="inline-flex items-center justify-center rounded-2xl border border-amber-300 px-4 py-3 text-sm font-bold text-amber-700 transition hover:bg-amber-50">View Unknown Alerts</a>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+  {% if result.frame_results %}
+    <div class="mt-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-soft">
+      <div class="border-b border-slate-100 px-8 py-6">
+        <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Frame Audit</div>
+        <h2 class="mt-2 text-2xl font-extrabold text-primary">Sampled Frames</h2>
+      </div>
+      <div class="overflow-x-auto px-4 py-4 md:px-8 md:py-6">
+        <table class="min-w-full border-separate border-spacing-y-3 text-left text-sm">
+          <thead>
+            <tr class="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+              <th class="px-4 py-2">Frame</th>
+              <th class="px-4 py-2">Spoof Prob</th>
+              <th class="px-4 py-2">Human Vs AI</th>
+              <th class="px-4 py-2">Similarity</th>
+              <th class="px-4 py-2">Matched</th>
+              <th class="px-4 py-2">Crop Path</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in result.frame_results %}
+              <tr class="rounded-2xl bg-slate-50 text-slate-700 shadow-sm">
+                <td class="rounded-l-2xl px-4 py-4 font-bold text-ink">{{ row.frame_index }}</td>
+                <td class="px-4 py-4">{{ '%.4f'|format(row.spoof_prob) }}</td>
+                <td class="px-4 py-4">
+                  <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] {% if row.is_live %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">{{ row.authenticity_label }}</span>
+                </td>
+                <td class="px-4 py-4">{% if row.similarity is not none %}{{ '%.4f'|format(row.similarity) }}{% else %}-{% endif %}</td>
+                <td class="px-4 py-4">
+                  {% if row.matched is not none %}
+                    <span class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] {% if row.matched %}bg-emerald-50 text-emerald-700{% else %}bg-red-50 text-red-700{% endif %}">{{ row.matched }}</span>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td class="rounded-r-2xl px-4 py-4">
+                  <div class="max-w-xs break-all font-mono text-xs leading-6 text-slate-500">{{ row.crop_path }}</div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

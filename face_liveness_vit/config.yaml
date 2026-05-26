@@ -1,0 +1,57 @@
+augment:
+  color_jitter:
+  - 0.1
+  - 0.1
+  - 0.1
+  - 0.05
+  gaussian_blur_p: 0.0
+  horizontal_flip_p: 0.5
+  random_grayscale_p: 0.0
+  random_resized_crop_scale:
+  - 0.8
+  - 1.0
+data:
+  num_workers: 8
+  persistent_workers: true
+  pin_memory: true
+  root: data/CelebA_Spoof
+  test_list: data/CelebA_Spoof/metas/intra_test/test_label.txt
+  train_list: data/CelebA_Spoof/metas/intra_test/train_label.txt
+  val_list: data/CelebA_Spoof/metas/intra_test/test_label.txt
+eval:
+  batch_size: 128
+log_dir: logs
+model:
+  d_model: 128
+  drop_path_rate: 0.1
+  drop_rate: 0.0
+  freeze_backbone: false
+  image_size: 224
+  name: liveness_vit
+  nhead: 4
+  num_classes: 2
+  num_layers: 2
+  patch_size: 16
+  pretrained: false
+output_dir: checkpoints
+project_name: face-liveness-transformer
+save:
+  mode: max
+  monitor: auc
+  save_top_k: 1
+seed: 42
+train:
+  amp: true
+  batch_size: 64
+  betas:
+  - 0.9
+  - 0.999
+  class_weights:
+  - 1.5
+  - 0.75
+  epochs: 30
+  lr: 0.0003
+  max_grad_norm: 1.0
+  warmup_epochs: 5
+  weight_decay: 0.05
+work_dir: .

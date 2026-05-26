@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SecureFace{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#0B3D91",
+            primary2: "#2563EB",
+            accent: "#38BDF8",
+            surface: "#F8FAFC",
+            panel: "#FFFFFF",
+            ink: "#0F172A",
+            muted: "#475569",
+            ok: "#10B981",
+            warn: "#F59E0B",
+            bad: "#EF4444",
+          },
+          boxShadow: {
+            soft: "0 18px 40px rgba(15, 23, 42, 0.08)",
+            card: "0 24px 64px rgba(11, 61, 145, 0.12)",
+            panel: "0 14px 36px rgba(37, 99, 235, 0.10)",
+          },
+          fontFamily: {
+            sans: ["Manrope", "system-ui", "sans-serif"],
+            display: ["Sora", "Manrope", "system-ui", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .hero-glow {
+      background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.22), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.16), transparent 30%);
+    }
+
+    .glass-line {
+      border: 1px solid rgba(37, 99, 235, 0.12);
+    }
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="min-h-screen bg-surface font-sans text-ink antialiased">
+  <div class="fixed inset-0 -z-10 overflow-hidden">
+    <div class="hero-glow absolute inset-0"></div>
+    <div class="grid-bg absolute inset-0 opacity-50"></div>
+    <div class="absolute left-[-10rem] top-20 h-80 w-80 rounded-full bg-blue-200/30 blur-3xl"></div>
+    <div class="absolute bottom-[-9rem] right-[-7rem] h-80 w-80 rounded-full bg-sky-200/30 blur-3xl"></div>
+  </div>
+
+  <div class="flex min-h-screen flex-col">
+    <header class="sticky top-0 z-40 border-b border-blue-100/80 bg-white/85 backdrop-blur">
+      <div class="mx-auto flex w-full max-w-7xl items-center justify-between gap-6 px-6 py-4">
+        <a href="{{ url_for('index') }}" class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-extrabold tracking-[0.2em] text-white shadow-panel">
+            SF
+          </div>
+          <div>
+            <div class="font-display text-lg font-extrabold tracking-tight text-primary">SecureFace</div>
+            <div class="text-xs font-medium text-slate-500">High-Integrity Biometric Access</div>
+          </div>
+        </a>
+
+        <nav class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+          <a href="{{ url_for('index') }}" class="rounded-xl px-4 py-2 transition {% if request.endpoint == 'index' %}bg-primary text-white shadow-panel{% else %}text-slate-600 hover:bg-blue-50 hover:text-primary{% endif %}">Home</a>
+          <a href="{{ url_for('register') }}" class="rounded-xl px-4 py-2 transition {% if request.endpoint == 'register' %}bg-primary text-white shadow-panel{% else %}text-slate-600 hover:bg-blue-50 hover:text-primary{% endif %}">Register</a>
+          <a href="{{ url_for('authenticate') }}" class="rounded-xl px-4 py-2 transition {% if request.endpoint == 'authenticate' %}bg-primary text-white shadow-panel{% else %}text-slate-600 hover:bg-blue-50 hover:text-primary{% endif %}">Authenticate</a>
+          <a href="{{ url_for('audit') }}" class="rounded-xl px-4 py-2 transition {% if request.endpoint == 'audit' %}bg-primary text-white shadow-panel{% else %}text-slate-600 hover:bg-blue-50 hover:text-primary{% endif %}">Audit</a>
+          <a href="{{ url_for('unknown_attempts') }}" class="rounded-xl px-4 py-2 transition {% if request.endpoint == 'unknown_attempts' %}bg-primary text-white shadow-panel{% else %}text-slate-600 hover:bg-blue-50 hover:text-primary{% endif %}">Unknown Alerts</a>
+        </nav>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="mx-auto w-full max-w-7xl px-6 pt-6">
+          {% for category, message in messages %}
+            <div class="mb-4 rounded-2xl border px-5 py-4 shadow-soft {% if category == 'error' %}border-red-200 bg-red-50 text-red-700{% elif category == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-blue-200 bg-blue-50 text-primary{% endif %}">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 h-2.5 w-2.5 rounded-full {% if category == 'error' %}bg-bad{% elif category == 'success' %}bg-ok{% else %}bg-primary2{% endif %}"></div>
+                <div>
+                  <div class="text-xs font-bold uppercase tracking-[0.25em] opacity-80">System Notice</div>
+                  <div class="mt-1 text-sm font-semibold">{{ message }}</div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    <main class="flex-1">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white/95">
+      <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-6 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
+        <div class="max-w-2xl">
+          Secure biometric verification with liveness-aware processing, privacy-first interaction, and enterprise-grade visual clarity.
+        </div>
+        <div class="flex flex-wrap items-center gap-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-ok"></span>Integrity</span>
+          <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary2"></span>Reliability</span>
+          <span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-accent"></span>Liveness-Aware</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js"></script>
+  <script>
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+    const euclideanDistance = (pointA, pointB) => {
+      if (!pointA || !pointB) {
+        return 0;
+      }
+      const dx = pointA.x - pointB.x;
+      const dy = pointA.y - pointB.y;
+      return Math.hypot(dx, dy);
+    };
+
+    function computeEyeAspectRatio(landmarks, indices) {
+      const points = indices.map((index) => landmarks[index]);
+      if (points.some((point) => !point)) {
+        return 0;
+      }
+      const verticalA = euclideanDistance(points[1], points[5]);
+      const verticalB = euclideanDistance(points[2], points[4]);
+      const horizontal = euclideanDistance(points[0], points[3]);
+      return horizontal > 0 ? ((verticalA + verticalB) / (2 * horizontal)) : 0;
+    }
+
+    function computeTurnScore(landmarks) {
+      const leftEye = landmarks[33];
+      const rightEye = landmarks[263];
+      const nose = landmarks[1] || landmarks[4];
+      if (!leftEye || !rightEye || !nose) {
+        return 0;
+      }
+      const eyeMidX = (leftEye.x + rightEye.x) / 2;
+      const eyeDistance = Math.abs(rightEye.x - leftEye.x);
+      return eyeDistance > 0 ? ((nose.x - eyeMidX) / eyeDistance) : 0;
+    }
+
+    function createBlinkTracker(settings = {}) {
+      const action = settings.action || "blink";
+      const requiredBlinks = Math.max(1, Number(settings.requiredBlinks || 1));
+      const minClosedFrames = Math.max(1, Number(settings.minClosedFrames || 2));
+      const minBaselineEar = Number(settings.minBaselineEar || 0.18);
+      const closeRatio = Number(settings.closeRatio || 0.72);
+      const reopenRatio = Number(settings.reopenRatio || 0.86);
+      const turnThreshold = Number(settings.turnThreshold || 0.04);
+
+      let blinkCount = 0;
+      let baselineEar = 0;
+      let closedFrames = 0;
+      let faceDetected = false;
+      let verified = false;
+      let currentEar = null;
+      let status = "searching";
+
+      const snapshot = () => ({
+        blinkCount,
+        requiredBlinks,
+        verified,
+        faceDetected,
+        baselineEar,
+        currentEar,
+        status,
+      });
+
+      const reset = () => {
+        blinkCount = 0;
+        baselineEar = 0;
+        closedFrames = 0;
+        faceDetected = false;
+        verified = false;
+        currentEar = null;
+        status = "searching";
+      };
+
+      const update = (results) => {
+        const landmarks = results?.multiFaceLandmarks?.[0];
+        faceDetected = Boolean(landmarks);
+        if (!landmarks) {
+          closedFrames = 0;
+          currentEar = null;
+          status = "no_face";
+          return snapshot();
+        }
+
+        if (action === "turn_left" || action === "turn_right") {
+          const turnScore = computeTurnScore(landmarks);
+          currentEar = turnScore;
+          if (action === "turn_left" && turnScore <= -turnThreshold) {
+            verified = true;
+            status = "turn_verified";
+            return snapshot();
+          }
+          if (action === "turn_right" && turnScore >= turnThreshold) {
+            verified = true;
+            status = "turn_verified";
+            return snapshot();
+          }
+          status = "turn_pending";
+          return snapshot();
+        }
+
+        const leftEar = computeEyeAspectRatio(landmarks, [33, 160, 158, 133, 153, 144]);
+        const rightEar = computeEyeAspectRatio(landmarks, [362, 385, 387, 263, 373, 380]);
+        const ear = (leftEar + rightEar) / 2;
+        currentEar = Number.isFinite(ear) ? ear : null;
+
+        if (!Number.isFinite(ear) || ear <= 0) {
+          closedFrames = 0;
+          status = "unstable";
+          return snapshot();
+        }
+
+        if (ear > (minBaselineEar * 0.7)) {
+          baselineEar = baselineEar ? Math.max(ear, baselineEar * 0.985) : ear;
+        }
+
+        const activeBaseline = Math.max(baselineEar, minBaselineEar);
+        const closedThreshold = activeBaseline * closeRatio;
+        const reopenThreshold = activeBaseline * reopenRatio;
+
+        if (ear <= closedThreshold) {
+          closedFrames += 1;
+          status = "eyes_closed";
+          return snapshot();
+        }
+
+        if (closedFrames >= minClosedFrames && ear >= reopenThreshold) {
+          blinkCount += 1;
+          verified = blinkCount >= requiredBlinks;
+          status = "blink_detected";
+          closedFrames = 0;
+          return snapshot();
+        }
+
+        closedFrames = 0;
+        status = "eyes_open";
+        return snapshot();
+      };
+
+      return { reset, snapshot, update };
+    }
+
+    async function createBlinkAnalyzer(videoEl, settings, onUpdate) {
+      if (typeof FaceMesh !== "function") {
+        throw new Error("Blink detector unavailable");
+      }
+
+      const tracker = createBlinkTracker(settings);
+      const faceMesh = new FaceMesh({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/${file}`,
+      });
+      faceMesh.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+      faceMesh.onResults((results) => {
+        onUpdate(tracker.update(results));
+      });
+
+      let active = false;
+      let frameHandle = 0;
+
+      const loop = async () => {
+        if (!active) {
+          return;
+        }
+        try {
+          await faceMesh.send({ image: videoEl });
+        } catch (error) {
+          if (active) {
+            onUpdate({ ...tracker.snapshot(), error: error instanceof Error ? error.message : "blink_error" });
+          }
+        }
+        if (active) {
+          frameHandle = window.requestAnimationFrame(loop);
+        }
+      };
+
+      return {
+        start() {
+          if (active) {
+            return;
+          }
+          active = true;
+          onUpdate(tracker.snapshot());
+          loop();
+        },
+        stop() {
+          active = false;
+          if (frameHandle) {
+            window.cancelAnimationFrame(frameHandle);
+            frameHandle = 0;
+          }
+          if (typeof faceMesh.close === "function") {
+            faceMesh.close();
+          }
+          tracker.reset();
+        },
+        getState() {
+          return tracker.snapshot();
+        },
+      };
+    }
+
+    function gaussianBlur(gray, width, height) {
+      const blurred = new Float32Array(gray.length);
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          let sum = 0;
+          for (let ky = -1; ky <= 1; ky += 1) {
+            for (let kx = -1; kx <= 1; kx += 1) {
+              const px = clamp(x + kx, 0, width - 1);
+              const py = clamp(y + ky, 0, height - 1);
+              const weight = (kx === 0 ? 2 : 1) * (ky === 0 ? 2 : 1);
+              sum += gray[py * width + px] * weight;
+            }
+          }
+          blurred[y * width + x] = sum / 16;
+        }
+      }
+      return blurred;
+    }
+
+    function analyzeFrame(context, width, height) {
+      const imageData = context.getImageData(0, 0, width, height).data;
+      const gray = new Float32Array(width * height);
+      let brightnessSum = 0;
+
+      for (let src = 0, dst = 0; src < imageData.length; src += 4, dst += 1) {
+        const value = (0.299 * imageData[src]) + (0.587 * imageData[src + 1]) + (0.114 * imageData[src + 2]);
+        gray[dst] = value;
+        brightnessSum += value;
+      }
+
+      const brightness = brightnessSum / gray.length;
+      let varianceAccumulator = 0;
+      for (let index = 0; index < gray.length; index += 1) {
+        const delta = gray[index] - brightness;
+        varianceAccumulator += delta * delta;
+      }
+      const contrast = Math.sqrt(varianceAccumulator / gray.length);
+
+      const blurred = gaussianBlur(gray, width, height);
+      let lapSum = 0;
+      let lapSquares = 0;
+      let sampleCount = 0;
+
+      for (let y = 1; y < height - 1; y += 1) {
+        for (let x = 1; x < width - 1; x += 1) {
+          const center = blurred[y * width + x];
+          const response = (
+            blurred[(y - 1) * width + x]
+            + blurred[(y + 1) * width + x]
+            + blurred[y * width + x - 1]
+            + blurred[y * width + x + 1]
+            - (4 * center)
+          );
+          lapSum += response;
+          lapSquares += response * response;
+          sampleCount += 1;
+        }
+      }
+
+      const lapMean = sampleCount ? (lapSum / sampleCount) : 0;
+      const sharpness = sampleCount ? ((lapSquares / sampleCount) - (lapMean * lapMean)) : 0;
+      return { brightness, contrast, sharpness };
+    }
+
+    function framePasses(metrics, settings) {
+      return (
+        metrics.sharpness >= settings.sharpnessThreshold
+        && metrics.contrast >= settings.contrastThreshold
+        && metrics.brightness >= settings.brightnessMin
+        && metrics.brightness <= settings.brightnessMax
+      );
+    }
+
+    async function frameToFile(videoEl, canvasEl, index) {
+      const width = videoEl.videoWidth || 640;
+      const height = videoEl.videoHeight || 480;
+      canvasEl.width = width;
+      canvasEl.height = height;
+      const exportContext = canvasEl.getContext("2d");
+      exportContext.drawImage(videoEl, 0, 0, width, height);
+      const blob = await new Promise((resolve) => canvasEl.toBlob(resolve, "image/jpeg", 0.92));
+      if (!blob) {
+        return null;
+      }
+      return new File([blob], `webcam_frame_${String(index).padStart(2, "0")}.jpg`, { type: "image/jpeg" });
+    }
+
+    document.querySelectorAll("form[data-webcam-form]").forEach((form) => {
+      const panel = form.querySelector("[data-webcam-panel]");
+      if (!panel) {
+        return;
+      }
+
+      const preview = panel.querySelector(".webcam-preview");
+      const canvas = panel.querySelector(".webcam-canvas");
+      const recIndicator = panel.querySelector("[data-webcam-rec-indicator]");
+      const flashOverlay = panel.querySelector("[data-webcam-flash]");
+      const startBtn = panel.querySelector(".webcam-start");
+      const status = panel.querySelector(".webcam-status");
+      const badge = panel.querySelector("[data-webcam-badge]");
+      const placeholder = panel.querySelector("[data-webcam-placeholder]");
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const captureTarget = Number(panel.dataset.captureTarget || 14);
+      const captureIntervalMs = Number(panel.dataset.captureIntervalMs || 180);
+      const captureMaxAttempts = Number(panel.dataset.captureMaxAttempts || 180);
+      const blinkSettings = {
+        action: panel.dataset.challengeAction || "blink",
+        requiredBlinks: Number(panel.dataset.requiredBlinks || 1),
+        minClosedFrames: Number(panel.dataset.blinkMinClosedFrames || 2),
+        turnThreshold: Number(panel.dataset.turnThreshold || 0.04),
+      };
+      const qualitySettings = {
+        sharpnessThreshold: Number(panel.dataset.sharpnessThreshold || 45),
+        contrastThreshold: Number(panel.dataset.contrastThreshold || 18),
+        brightnessMin: Number(panel.dataset.brightnessMin || 55),
+        brightnessMax: Number(panel.dataset.brightnessMax || 220),
+      };
+
+      const toneClasses = {
+        idle: "bg-slate-100 text-slate-600",
+        live: "bg-blue-50 text-primary",
+        progress: "bg-amber-50 text-amber-700",
+        ready: "bg-emerald-50 text-emerald-700",
+        error: "bg-red-50 text-red-700",
+      };
+
+      let stream = null;
+      let capturedFrames = [];
+      let capturing = false;
+      let blinkAnalyzer = null;
+      let blinkState = {
+        blinkCount: 0,
+        requiredBlinks: blinkSettings.requiredBlinks,
+        verified: false,
+        faceDetected: false,
+        status: "searching",
+      };
+
+      const triggerFlash = async () => {
+        if (flashOverlay) {
+          flashOverlay.classList.remove("opacity-0");
+          flashOverlay.classList.add("opacity-80");
+          await sleep(50);
+          flashOverlay.classList.remove("opacity-80");
+          flashOverlay.classList.add("opacity-0");
+        }
+      };
+
+      const setStatus = (message) => {
+        if (status) {
+          status.textContent = message;
+        }
+      };
+
+      const setBadge = (message, tone) => {
+        if (!badge) {
+          return;
+        }
+        badge.textContent = message;
+        badge.className = `rounded-full px-3 py-1 text-xs font-semibold ${toneClasses[tone] || toneClasses.idle}`;
+      };
+
+      const showPreview = (visible) => {
+        if (preview) {
+          preview.hidden = !visible;
+          preview.classList.toggle("hidden", !visible);
+        }
+        if (placeholder) {
+          placeholder.hidden = visible;
+          placeholder.classList.toggle("hidden", visible);
+        }
+      };
+
+      const setSubmitReady = (ready) => {
+        if (submitBtn) {
+          submitBtn.disabled = !ready;
+        }
+      };
+
+      const resetBlinkState = () => {
+        blinkState = {
+          blinkCount: 0,
+          requiredBlinks: blinkSettings.requiredBlinks,
+          verified: false,
+          faceDetected: false,
+          status: "searching",
+        };
+      };
+
+      const clearCapturedFrames = () => {
+        capturedFrames = [];
+        resetBlinkState();
+        setSubmitReady(false);
+      };
+
+      const stopBlinkAnalyzer = () => {
+        if (blinkAnalyzer) {
+          blinkAnalyzer.stop();
+          blinkAnalyzer = null;
+        }
+      };
+
+      const stopStream = () => {
+        stopBlinkAnalyzer();
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+        if (preview) {
+          preview.srcObject = null;
+        }
+        stream = null;
+        showPreview(false);
+      };
+
+      async function collectHighQualityFrames() {
+        if (!blinkAnalyzer) {
+          throw new Error("Blink verification is not ready.");
+        }
+
+        let attempts = 0;
+        let acceptedFrames = 0;
+
+        while (stream && attempts < captureMaxAttempts && capturedFrames.length < captureTarget) {
+          attempts += 1;
+          blinkState = blinkAnalyzer.getState();
+
+          if (!blinkState.verified) {
+            setBadge("Challenge", "progress");
+            if (!blinkState.faceDetected) {
+              setStatus("Center your face in the frame, then complete the live challenge to prove liveness.");
+            } else if (blinkSettings.action === "turn_left") {
+              setStatus("Turn your face slightly to the left and keep it visible in frame.");
+            } else if (blinkSettings.action === "turn_right") {
+              setStatus("Turn your face slightly to the right and keep it visible in frame.");
+            } else if (blinkState.status === "eyes_closed") {
+              setStatus("Blink detected. Open your eyes to finish the blink challenge.");
+            } else {
+              setStatus(`Blink ${blinkState.requiredBlinks} time(s) to continue. Detected ${blinkState.blinkCount}/${blinkState.requiredBlinks} verified blinks.`);
+            }
+            await sleep(captureIntervalMs);
+            continue;
+          }
+
+          const frameFile = await frameToFile(preview, canvas, capturedFrames.length);
+          if (frameFile) {
+            capturedFrames.push(frameFile);
+            acceptedFrames += 1;
+            if (acceptedFrames <= 2 || acceptedFrames === captureTarget) {
+              triggerFlash();
+            }
+          }
+          const remainingFrames = Math.max(0, captureTarget - capturedFrames.length);
+          const etaSeconds = Math.max(0, Math.ceil((remainingFrames * captureIntervalMs) / 1000));
+          setBadge(`Frames ${capturedFrames.length}/${captureTarget}`, "progress");
+          setStatus(`Challenge verified. Recording live frames ${capturedFrames.length}/${captureTarget}. About ${etaSeconds}s remaining.`);
+          if (capturedFrames.length >= captureTarget) {
+            break;
+          }
+          await sleep(captureIntervalMs);
+        }
+
+        return {
+          success: capturedFrames.length >= captureTarget,
+          blinkVerified: Boolean(blinkState.verified),
+        };
+      }
+
+      async function submitCapturedFrames() {
+        if (!capturedFrames.length) {
+          setBadge("Capture Needed", "error");
+          setStatus("Start the webcam first so the system can capture a live session.");
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+        }
+        if (startBtn) {
+          startBtn.disabled = true;
+        }
+        setBadge("Submitting", "progress");
+        setStatus("Submitting capture...");
+
+        try {
+          const formData = new FormData(form);
+          formData.delete("video");
+          capturedFrames.forEach((file) => {
+            formData.append("webcam_frames", file, file.name);
+          });
+          const response = await fetch(form.action || window.location.href, {
+            method: form.method || "POST",
+            body: formData,
+            credentials: "same-origin",
+          });
+          const html = await response.text();
+          document.open();
+          document.write(html);
+          document.close();
+        } catch (error) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+          }
+          if (startBtn) {
+            startBtn.disabled = false;
+          }
+          setBadge("Submit Failed", "error");
+          setStatus("Submission failed. Retry or capture again.");
+        }
+      }
+
+      setSubmitReady(false);
+      resetBlinkState();
+      setBadge("Idle", "idle");
+      showPreview(false);
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (startBtn) {
+          startBtn.disabled = true;
+        }
+        setBadge("Unavailable", "error");
+        setStatus("This browser does not support live webcam capture.");
+        return;
+      }
+
+      startBtn.addEventListener("click", async () => {
+        if (capturing) {
+          return;
+        }
+
+        try {
+          clearCapturedFrames();
+          stopStream();
+          startBtn.disabled = true;
+          startBtn.textContent = "Capturing...";
+          setBadge("Capturing", "progress");
+          setStatus("Capturing frames...");
+
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+          preview.srcObject = stream;
+          showPreview(true);
+          await preview.play();
+          await sleep(900);
+
+          blinkAnalyzer = await createBlinkAnalyzer(preview, blinkSettings, (nextBlinkState) => {
+            blinkState = {
+              blinkCount: Number(nextBlinkState.blinkCount || 0),
+              requiredBlinks: Number(nextBlinkState.requiredBlinks || blinkSettings.requiredBlinks),
+              verified: Boolean(nextBlinkState.verified),
+              faceDetected: Boolean(nextBlinkState.faceDetected),
+              status: nextBlinkState.status || "searching",
+            };
+          });
+          blinkAnalyzer.start();
+
+          capturing = true;
+          if (recIndicator) recIndicator.classList.remove("hidden");
+          const captureSummary = await collectHighQualityFrames();
+          if (recIndicator) recIndicator.classList.add("hidden");
+          capturing = false;
+          stopStream();
+          startBtn.disabled = false;
+          startBtn.textContent = "Start Webcam";
+
+          if (captureSummary.success) {
+            setSubmitReady(true);
+            setBadge("Ready", "ready");
+            setStatus("Capture complete. Submitting...");
+            await sleep(250);
+            await submitCapturedFrames();
+          } else if (!captureSummary.blinkVerified) {
+            setBadge("Challenge Missing", "error");
+            if (blinkSettings.action === "turn_left") {
+              setStatus("The left-turn challenge did not complete. Keep your face centered first, then turn slightly to the left.");
+            } else if (blinkSettings.action === "turn_right") {
+              setStatus("The right-turn challenge did not complete. Keep your face centered first, then turn slightly to the right.");
+            } else {
+              setStatus(`Blink verification did not complete. Keep your face centered and blink ${blinkSettings.requiredBlinks} time(s) naturally.`);
+            }
+          } else {
+            setBadge("Retry", "error");
+            setStatus("The live sequence was too short. Start the webcam again and keep your face visible for a little longer.");
+          }
+        } catch (error) {
+          capturing = false;
+          stopStream();
+          startBtn.disabled = false;
+          startBtn.textContent = "Start Webcam";
+          setBadge("Camera Error", "error");
+          setStatus("Could not access the webcam or initialize blink detection. Check browser permission and try again.");
+        }
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await submitCapturedFrames();
+      });
+
+      window.addEventListener("beforeunload", stopStream);
+    });
+  </script>
+</body>
+</html>

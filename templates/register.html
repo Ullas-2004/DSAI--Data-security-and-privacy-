@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}SecureFace | Register{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-7xl px-6 py-14">
+  <div class="mb-10 max-w-3xl">
+    <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-primary">
+      <span class="h-2 w-2 rounded-full bg-primary2"></span>
+      Secure Enrollment
+    </div>
+    <h1 class="mt-4 font-display text-4xl font-extrabold tracking-tight text-primary md:text-5xl">Register Identity</h1>
+    <p class="mt-4 text-lg leading-8 text-slate-600">
+      Create a biometric profile with live webcam capture only. The camera stays open until the quality gate collects sharp, clean frames and the human-vs-AI screen confirms a real face session.
+    </p>
+  </div>
+
+  <div class="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+    <div class="rounded-[2rem] border border-blue-100 bg-white p-8 shadow-card">
+      <form method="post" action="{{ url_for('register') }}" enctype="multipart/form-data" data-webcam-form class="space-y-8">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="challenge_nonce" value="{{ challenge.nonce }}">
+        <div>
+          <label for="username" class="block text-sm font-bold uppercase tracking-[0.2em] text-slate-600">Username</label>
+          <input type="text" id="username" name="username" required autocomplete="off" placeholder="Enter internal identity label" class="mt-3 w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-ink outline-none transition focus:border-primary2 focus:ring-4 focus:ring-blue-100">
+          <p class="mt-3 text-sm leading-6 text-slate-500">This identifier stays inside the auth workflow and is used later during authentication.</p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-slate-50/80 p-6" data-webcam-panel data-capture-target="6" data-capture-interval-ms="80" data-capture-max-attempts="80" data-sharpness-threshold="34" data-contrast-threshold="12" data-brightness-min="45" data-brightness-max="230" data-required-blinks="{{ challenge.required_blinks or 1 }}" data-blink-min-closed-frames="1" data-challenge-action="{{ challenge.action }}">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Live Capture</div>
+              <h2 class="mt-2 text-xl font-extrabold text-ink">Webcam Enrollment</h2>
+              <p class="mt-2 text-sm leading-6 text-slate-600">Press start webcam, follow this live prompt: {{ challenge_instruction }}</p>
+            </div>
+            <div class="rounded-2xl bg-blue-100 px-3 py-2 text-xs font-bold uppercase tracking-[0.2em] text-primary">Live</div>
+          </div>
+
+          <div class="mt-6 flex flex-wrap items-center gap-4">
+            <button type="button" class="webcam-start inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary2 disabled:cursor-not-allowed disabled:opacity-50">Start Webcam</button>
+            <span data-webcam-badge class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">Idle</span>
+          </div>
+
+          <div class="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-950 shadow-soft relative">
+            <video class="webcam-preview hidden aspect-[4/3] w-full object-cover" autoplay muted playsinline></video>
+            <div data-webcam-rec-indicator class="absolute top-4 right-4 z-10 hidden flex items-center gap-2">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+              <span class="text-xs font-bold text-white tracking-widest uppercase drop-shadow-md">REC</span>
+            </div>
+            <div data-webcam-flash class="absolute inset-0 z-20 bg-white opacity-0 pointer-events-none transition-opacity duration-75"></div>
+            <canvas class="webcam-canvas hidden"></canvas>
+            <div data-webcam-placeholder class="flex aspect-[4/3] items-center justify-center px-6 text-center text-sm font-medium text-slate-300">
+              Live camera preview will appear here while the system captures a registration session.
+            </div>
+          </div>
+
+          <p class="webcam-status mt-5 text-sm leading-6 text-slate-600" aria-live="polite">Start webcam to begin live registration capture.</p>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
+          <div class="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_280px]">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Enrollment Guidance</div>
+              <h2 class="mt-2 text-2xl font-extrabold text-ink">What the system expects</h2>
+              <div class="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>Center the face and keep the device steady.</p>
+                <p>{{ challenge_instruction }}</p>
+                <p>Use stable light and avoid aggressive motion blur.</p>
+                <p>The capture loop waits for sharp, clean frames automatically.</p>
+                <p>Enrollment will fail if the session looks spoofed or AI-generated.</p>
+              </div>
+            </div>
+            <div class="rounded-3xl border border-blue-100 bg-white p-5 shadow-soft">
+              <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Capture Policy</div>
+              <div class="mt-3 text-lg font-extrabold text-primary">Real Human Capture Required</div>
+              <p class="mt-3 text-sm leading-7 text-slate-600">
+                Registration is intended to create a trustworthy profile, so spoofed, replayed, or AI-generated sessions should be rejected before any profile is saved.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-card transition hover:bg-primary2 disabled:cursor-not-allowed disabled:opacity-50" disabled>Register Identity</button>
+          <p class="text-sm leading-6 text-slate-500">The capture submits automatically when it is ready. Manual submit remains as fallback.</p>
+        </div>
+      </form>
+    </div>
+
+    <aside class="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-soft">
+      <div class="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">Enrollment Policy</div>
+      <h2 class="mt-2 text-2xl font-extrabold text-primary">Secure Registration Checks</h2>
+
+      <div class="mt-6 space-y-4">
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">1. Blink Challenge</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">Require a natural blink before any enrollment frames are accepted.</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">2. Quality Gate</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">Keep capturing until the webcam frames are sharp and clean enough to use.</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">3. Face Detection</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">Validate that enough usable face frames were found.</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">4. Human Vs AI Gate</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">Screen out replay, spoof-like, or deepfake-like captures before storing a profile.</div>
+        </div>
+        <div class="rounded-3xl border border-slate-200 p-4">
+          <div class="font-bold text-ink">5. Profile Storage</div>
+          <div class="mt-2 text-sm leading-6 text-slate-600">Persist the registration only after the session passes the required checks.</div>
+        </div>
+      </div>
+
+      <div class="mt-6 rounded-3xl border border-blue-100 bg-blue-50 p-5">
+        <div class="text-sm font-bold text-primary">Privacy Rule</div>
+        <p class="mt-2 text-sm leading-7 text-slate-600">The website should verify identities without publicly revealing who is enrolled.</p>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
